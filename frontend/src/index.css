@@ -1,0 +1,110 @@
+/* src/index.css */
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; overflow: hidden; }
+
+/* LAYOUT */
+.dashboard-layout { display: flex; flex-direction: column; height: 100vh; }
+.main-content { display: flex; flex: 1; overflow: hidden; }
+
+/* HEADER */
+.top-bar {
+  background: #2c3e50; color: white; padding: 0 20px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;
+}
+.search-form { display: flex; width: 40%; max-width: 500px; }
+.search-form input {
+  flex: 1; padding: 8px 15px; border-radius: 20px 0 0 20px; border: none; outline: none;
+}
+.search-form button {
+  background: #27ae60; color: white; border: none; padding: 0 20px;
+  border-radius: 0 20px 20px 0; cursor: pointer; font-size: 18px;
+}
+.user-info { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; }
+.logout-link { color: #bdc3c7; text-decoration: none; font-size: 0.9em; }
+
+/* SIDEBARS (Lijevo i Desno) */
+.sidebar-left { width: 250px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+.sidebar-right { width: 320px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; }
+
+.sidebar-header, .sidebar-right h3 { padding: 15px; border-bottom: 1px solid #eee; margin: 0; background: #f9f9f9; }
+.list-content, .track-list { overflow-y: auto; flex: 1; padding: 10px; }
+
+/* KARTICA DRŽAVE */
+.country-card {
+  padding: 12px; margin-bottom: 8px; background: #fff;
+  border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  border-left: 4px solid transparent; transition: all 0.2s;
+}
+.country-card:hover { transform: translateY(-2px); }
+.country-card.active {
+  background: #ebf5fb; transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  font-weight: bold;
+}
+.delete-btn {
+  width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e74c3c;
+  color: #e74c3c; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.delete-btn:hover { background: #e74c3c; color: white; }
+
+/* MAPA */
+.map-wrapper { flex: 1; position: relative; }
+
+/* PJESME */
+.track-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+.track-img { width: 40px; height: 40px; border-radius: 4px; margin-right: 10px; }
+.track-info { display: flex; flex-direction: column; overflow: hidden; }
+.track-title { font-size: 0.95em; font-weight: 600; color: #333; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-artist { font-size: 0.85em; color: #777; }
+.track-rank { width: 25px; font-weight: bold; color: #ccc; }
+.empty-msg { padding: 20px; color: #999; text-align: center; font-style: italic; }
+
+/* LOGIN PAGE */
+.login-container { height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #2c3e50, #4ca1af); }
+.login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+.google-btn { background: #db4437; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px; }
+
+
+.search-container {
+  position: relative; /* Bitno da se lista pozicionira u odnosu na ovo */
+  width: 100%;
+  display: flex;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: 105%; /* Odmah ispod inputa */
+  left: 13px;
+  right: 0;
+  width: 96%;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  max-height: 200px; /* Ako je lista duga, neka se skrola */
+  overflow-y: auto;
+  z-index: 1000;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  text-align: left;
+}
+
+.suggestion-item:hover {
+  background-color: #f1f2f6;
+  color: #2c3e50;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}

@@ -1,0 +1,4 @@
+Application name 	DruMre
+API key 	251ede171e4edee3c65b4f7b08255867
+Shared secret 	2abef6bff61b7547861ff116ad0de4c2
+Registered to 	titanik33
