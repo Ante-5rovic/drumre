@@ -7,7 +7,6 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const cors = require('cors');
 const axios = require('axios');
 
-// Učitavanje modela
 require('./models/User');
 require('./models/Location');
 
@@ -36,9 +35,18 @@ app.use(function(req, res, next) {
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Spojen na MongoDB"))
-  .catch(err => console.error("❌ Greška baze:", err));
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000 
+    });
+    console.log("Spojen na MongoDB");
+  } catch (err) {
+    console.error("Greška pri spajanju na bazu. Provjeri IP Whitelist na Atlasu!");
+  }
+};
+connectDB();
 
 
 // ===========================================================================
@@ -77,7 +85,7 @@ const countryToTag = {
   "Ireland": "Irish", "Mexico": "Mexican", "Argentina": "Argentine", "Colombia": "Colombian",
   "Philippines": "Pinoy", "Indonesia": "Indonesian", "Thailand": "Thai", "Vietnam": "Vietnamese",
   "Egypt": "Egyptian", "South Africa": "South African", "Nigeria": "Nigerian",
-  "Jamaica": "Jamaican", "Puerto Rico": "Puerto Rican"
+  "Jamaica": "Jamaican", "Puerto Rico": "Puerto Rican", "Austria": "Austrian"
 };
 
 
@@ -108,7 +116,6 @@ const getRandomColor = () => {
   return color;
 }
 
-// Helper za pauzu
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- TRIPLE-CHECK ORIGIN ---
@@ -134,7 +141,7 @@ const checkOrigin = async (artistName, trackName, nativeTag, countryName, apiKey
     // 1. INFO O IZVOĐAČU
     const artistRes = await axios.get(`http://ws.audioscrobbler.com/2.0/`, {
       params: { method: 'artist.getInfo', artist: artistName, api_key: apiKey, format: 'json' },
-      timeout: 3000 // Kratki timeout da ne gušimo proces
+      timeout: 3000
     });
     const artistData = artistRes.data?.artist;
 
@@ -155,11 +162,9 @@ const checkOrigin = async (artistName, trackName, nativeTag, countryName, apiKey
   return false;
 };
 
-// --- CORE: PARALELIZIRANI DOHVAT (TURBO MODE) ---
 const fetchAndSaveLocation = async (userId, countryName) => {
   const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
 
-  // 1. Nominatim
   console.log(`[Core] Tražim državu: ${countryName}...`);
   const geoResponse = await axios.get(`https://nominatim.openstreetmap.org/search`, {
     params: { country: countryName, format: 'json', polygon_geojson: 1, limit: 1, addressdetails: 1 },
@@ -181,26 +186,35 @@ const fetchAndSaveLocation = async (userId, countryName) => {
 
   let globalTracks = [];
   let foundNativeTracks = [];
+  let poolOfTracks = [];
 
+  // 1. DOHVAT GLOBALNE LISTE (GEO)
   try {
-    // 1. Dohvati Top 200
     const geoRes = await axios.get(`http://ws.audioscrobbler.com/2.0/`, {
-      params: { method: 'geo.getTopTracks', country: standardName, api_key: LASTFM_API_KEY, format: 'json', limit: 200 },
-      validateStatus: false, timeout: 10000
+      params: { 
+        method: 'geo.getTopTracks', 
+        country: standardName, 
+        api_key: LASTFM_API_KEY, 
+        format: 'json', 
+        limit: 200 
+      },
+      validateStatus: false, timeout: 8000
     });
 
-    let poolOfTracks = [];
     if (geoRes.data?.tracks?.track) {
       const raw = geoRes.data.tracks.track;
       poolOfTracks = Array.isArray(raw) ? raw : [raw];
       globalTracks = poolOfTracks.slice(0, 10);
     }
+  } catch (err) {
+    console.warn(`[Geo] Nije uspio dohvat geo-tracks za ${standardName} (vjerojatno blokirano). Idem na Plan B.`);
+  }
 
-    // 2. BATCH SCANNER (40 po 40) - TURBO MODE
+  // 2. BATCH SCANNER (Samo ako imamo geo pjesme)
+  if (poolOfTracks.length > 0) {
     console.log(`[Scanner] Skeniram ${poolOfTracks.length} pjesama u grupama od 40...`);
-    
     const checkedArtists = new Map();
-    const BATCH_SIZE = 40; // <--- POVEĆANO NA 40!
+    const BATCH_SIZE = 40; 
 
     for (let i = 0; i < poolOfTracks.length; i += BATCH_SIZE) {
       if (foundNativeTracks.length >= 10) break;
@@ -234,39 +248,48 @@ const fetchAndSaveLocation = async (userId, countryName) => {
           }
         }
       }
-
-      // Malo veća pauza jer šaljemo puno zahtjeva odjednom (da ne dobijemo ban)
-      if (foundNativeTracks.length < 10) {
-        await delay(500); 
-      }
+      
+      if (foundNativeTracks.length < 10) await delay(500); 
     }
+  }
 
-    console.log(`[Scanner] Gotovo! Pronađeno ${foundNativeTracks.length} domaćih pjesama.`);
+  console.log(`[Scanner] Završeno. Pronađeno: ${foundNativeTracks.length}`);
 
-    // 3. FALLBACK
-    if (foundNativeTracks.length < 10) {
-      console.log(`[Scanner] Popunjavam s 'tag.getTopTracks'...`);
+  // 3. FALLBACK 
+  if (foundNativeTracks.length < 10) {
+    console.log(`[Fallback] Nedovoljno pjesama (${foundNativeTracks.length}/10). Popunjavam s 'tag.getTopTracks' za: ${nativeTag}...`);
+    
+    try {
       const tagRes = await axios.get(`http://ws.audioscrobbler.com/2.0/`, {
-        params: { method: 'tag.getTopTracks', tag: nativeTag, api_key: LASTFM_API_KEY, format: 'json', limit: 20 },
+        params: { 
+          method: 'tag.getTopTracks', 
+          tag: nativeTag, 
+          api_key: LASTFM_API_KEY, 
+          format: 'json', 
+          limit: 50 
+        },
         validateStatus: false 
       });
       
       if (tagRes.data?.tracks?.track) {
         const rawTagTracks = Array.isArray(tagRes.data.tracks.track) ? tagRes.data.tracks.track : [tagRes.data.tracks.track];
+        
         for (const tTrack of rawTagTracks) {
-          if (foundNativeTracks.length >= 10) break;
+          if (foundNativeTracks.length >= 10) break; 
           if (!foundNativeTracks.some(ft => ft.name === tTrack.name)) {
             foundNativeTracks.push(tTrack);
           }
         }
       }
+    } catch (err) {
+      console.error("[Fallback] Greška:", err.message);
     }
-
-  } catch (err) {
-    console.error("Last.fm process error:", err.message);
   }
 
-  // Mapiranje i spremanje
+  // 4.REZANJE NA 10 (User Request)
+  const finalNativeList = foundNativeTracks.slice(0, 10);
+  const finalGlobalList = globalTracks.slice(0, 10);
+
   const mapTracks = (list) => list.map((t, i) => ({
     rank: i + 1,
     name: t.name,
@@ -280,12 +303,12 @@ const fetchAndSaveLocation = async (userId, countryName) => {
     country: standardName,
     geojson: locData.geojson,
     color: getRandomColor(),
-    topTracks: mapTracks(globalTracks),
-    nativeTracks: mapTracks(foundNativeTracks)
+    topTracks: mapTracks(finalGlobalList),
+    nativeTracks: mapTracks(finalNativeList)
   });
 
   await newLocation.save();
-  console.log(`✅ [Core] Spremljeno: ${standardName}.`);
+  console.log(`✅ [Core] Spremljeno: ${standardName} (Native: ${finalNativeList.length}).`);
   return newLocation;
 };
 

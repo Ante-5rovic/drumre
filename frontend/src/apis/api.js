@@ -9,7 +9,6 @@ export const getLocations = () => api.get('/locations');
 export const addCountry = (countryName) => api.post('/add-country', { countryName });
 export const logout = () => api.get('/logout');
 
-// OVO DODAJ AKO FALI:
 export const deleteLocation = (id) => api.delete(`/locations/${id}`);
 
 export default api;

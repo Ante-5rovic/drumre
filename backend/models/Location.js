@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Shema za pjesmu (da ne ponavljamo kod)
 const TrackSchema = {
   rank: Number,
   name: String,
@@ -15,10 +14,7 @@ const locationSchema = new mongoose.Schema({
   geojson: { type: Object, required: true },
   color: String,
   
-  // 1. ONO ŠTO SE SLUŠA (Taylor Swift, itd.)
   topTracks: [TrackSchema], 
-
-  // 2. DOMAĆE PJESME (Oliver, Gibonni, itd.) - NOVO!
   nativeTracks: [TrackSchema],
 
   createdAt: { type: Date, default: Date.now }

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 
 const TrackSidebar = ({ selectedLocation }) => {
-  // State za prebacivanje tabova: 'top' (Popularno) ili 'native' (Domaće)
   const [activeTab, setActiveTab] = useState('top');
 
-  // Resetiraj tab na 'top' svaki put kad se promijeni država
+
   React.useEffect(() => {
     setActiveTab('top');
   }, [selectedLocation]);
@@ -18,7 +17,7 @@ const TrackSidebar = ({ selectedLocation }) => {
     );
   }
 
-  // Odaberi koju listu prikazujemo
+
   const tracksToShow = activeTab === 'top' 
     ? selectedLocation.topTracks 
     : selectedLocation.nativeTracks;
@@ -29,7 +28,7 @@ const TrackSidebar = ({ selectedLocation }) => {
          <h3>{selectedLocation.country}</h3>
       </div>
       
-      {/* GUMBOVI ZA PREBACIVANJE */}
+ 
       <div className="tab-buttons" style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
         <button 
           onClick={() => setActiveTab('top')}

@@ -3,15 +3,14 @@ import * as API from '../../apis/api';
 import CountrySidebar from '../../components/CountrySidebar/CountrySidebar';
 import TrackSidebar from '../../components/TrackSidebar/TrackSidebar';
 import MapComponent from '../../components/MapComponent/MapComponent';
-import { countryList } from '../../constants/countries'; // <--- UVEZI LISTU
-
+import { countryList } from '../../constants/countries';
 const Dashboard = ({ user }) => {
   const [locations, setLocations] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   
-  // State za pretragu
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]); // <--- NOVO: Lista prijedloga
+  const [suggestions, setSuggestions] = useState([]); 
 
   const [loading, setLoading] = useState(false);
   const [sortAsc, setSortAsc] = useState(true);
@@ -33,14 +32,12 @@ const Dashboard = ({ user }) => {
   const handleSearchChange = (text) => {
     setSearchQuery(text);
     
-    // Ako nema teksta, isprazni prijedloge
+
     if (!text) {
       setSuggestions([]);
       return;
     }
 
-    // Filtriraj listu (case-insensitive)
-    // Prikazujemo samo ako tekst ima 2 ili više slova da ne skače odmah
     if (text.length > 1) {
       const filtered = countryList.filter(country => 
         country.toLowerCase().startsWith(text.toLowerCase())
@@ -52,24 +49,22 @@ const Dashboard = ({ user }) => {
   };
 
   const selectSuggestion = (countryName) => {
-    setSearchQuery(countryName); // Postavi tekst u input
-    setSuggestions([]); // Sakrij listu
-    // Opcionalno: Odmah pozovi dodavanje (ili čekaj da user stisne +)
-    // handleAdd(null, countryName); 
+    setSearchQuery(countryName); 
+    setSuggestions([]); 
+
   };
   // -----------------------------
 
   const handleAdd = async (e) => {
-    if (e) e.preventDefault(); // Ako je pozvano klikom na gumb
+    if (e) e.preventDefault(); 
     
     if (!searchQuery) return;
     setLoading(true);
-    setSuggestions([]); // Sakrij prijedloge ako su ostali
+    setSuggestions([]); 
 
     try {
       const res = await API.addCountry(searchQuery);
       
-      // Provjera da li već imamo tu lokaciju u state-u (da ne dupliramo)
       const existsLocally = locations.find(l => l._id === res.data._id);
       
       if (!existsLocally) {
@@ -106,7 +101,6 @@ const Dashboard = ({ user }) => {
       <div className="top-bar">
         <div className="logo">MusicMap 🎧</div>
         
-        {/* NOVI SEARCH UI */}
         <form onSubmit={handleAdd} className="search-form">
           <div className="search-container">
             <input 
@@ -115,7 +109,6 @@ const Dashboard = ({ user }) => {
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               onBlur={() => {
-                // Mali delay da stignemo kliknuti na prijedlog prije nego nestane
                 setTimeout(() => setSuggestions([]), 200);
               }}
             />

@@ -30,7 +30,7 @@ const CountrySidebar = ({ locations, selectedId, onSelect, onDelete, sortAsc, on
             <button 
               className="delete-btn" 
               onClick={(e) => {
-                e.stopPropagation(); // Spriječi da klik na minus selektira državu
+                e.stopPropagation();
                 onDelete(loc._id);
               }}
             >

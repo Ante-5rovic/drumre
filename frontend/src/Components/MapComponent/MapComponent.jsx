@@ -9,7 +9,6 @@ function ZoomHandler({ selectedLocation }) {
   useEffect(() => {
     if (selectedLocation && selectedLocation.geojson) {
       const layer = L.geoJSON(selectedLocation.geojson);
-      // Animacija zumiranja na granice države
       map.fitBounds(layer.getBounds(), { padding: [50, 50], duration: 1 });
     }
   }, [selectedLocation, map]);
@@ -23,10 +22,10 @@ const MapComponent = ({ locations, selectedId, onSelect }) => {
     const isSelected = loc._id === selectedId;
     return {
       fillColor: loc.color,
-      weight: isSelected ? 3 : 1,     // Deblji rub ako je aktivna
+      weight: isSelected ? 3 : 1,    
       opacity: 1,
       color: isSelected ? '#fff' : 'white',
-      dashArray: isSelected ? '' : '3', // Isprekidana linija ako nije aktivna
+      dashArray: isSelected ? '' : '3', 
       fillOpacity: isSelected ? 0.7 : 0.4 
     };
   };
@@ -37,14 +36,13 @@ const MapComponent = ({ locations, selectedId, onSelect }) => {
     <div className="map-wrapper">
       <MapContainer center={[48, 15]} zoom={4} style={{ height: "100%", width: "100%" }}>
         <TileLayer
-          // Koristimo CartoDB mapu jer je čista i boje se bolje vide
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; OpenStreetMap & CartoDB'
         />
 
         {locations.map(loc => (
           <GeoJSON 
-            key={loc._id + (selectedId === loc._id ? '_active' : '')} // Trik za prisilni re-render stila
+            key={loc._id + (selectedId === loc._id ? '_active' : '')} 
             data={loc.geojson}
             style={() => geoJsonStyle(loc)}
             eventHandlers={{
